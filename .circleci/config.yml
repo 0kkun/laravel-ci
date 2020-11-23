@@ -17,11 +17,11 @@ jobs:
 
       # keyに指定した名前でキャッシュを保存。パッケージをキャッシュ(記憶)しておいてビルドを早くする
       - save_cache:
-        # checksumはCircleCIのテンプレート機能。{{ checksum "ファイル名" }}とすることで、ファイルをハッシュ化した値を算出
-        key: composer-v1-{{ checksum "composer.lock" }}
-        # 保存するディレクトリ名やファイル名はpathsへ記述
-        paths:
-        - vendor
+          # checksumはCircleCIのテンプレート機能。{{ checksum "ファイル名" }}とすることで、ファイルをハッシュ化した値を算出
+          key: composer-v1-{{ checksum "composer.lock" }}
+          # 保存するディレクトリ名やファイル名はpathsへ記述
+          paths:
+          - vendor
 
       - run: npm ci
       - run: npm run dev
