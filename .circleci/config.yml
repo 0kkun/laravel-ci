@@ -76,3 +76,37 @@ jobs:
 
   # composer.lockに変更が無い限りは、restore_chacheでは「前回以前のCircleCI実行時のsave_cacheで保存されたキャッシュ」を復元する
   # composer.lockに何か変更があれば、restore_chacheではキャッシュを復元せず、save_cacheで新しいkeyにてキャッシュを保存し直す
+
+# 自動デプロイ用
+  deploy:
+    docker:
+      - image: circleci/php:7.3-node-browsers
+    steps:
+      # CircleCIのProject Settings画面で登録したSSHの秘密鍵が、CircleCIで使用できるようになる
+      - add_ssh_keys
+      - run:
+          name: deploy
+          # -tオプションを使うと、SSHログイン先のサーバーで実行したコマンドの結果が表示される
+          # HOST_NAMEのところに、CircleCIで登録しておいたパブリックIPが入る
+          command: |
+            ssh -o StrictHostKeyChecking=no -t webapp@${HOST_NAME} "cd laravel-ci && \
+              git pull origin master && \
+              composer install -n --no-dev --prefer-dist && \
+              npm ci && \
+              npm run prod && \
+              php artisan migrate --force && \
+              php artisan config:cache"
+# 各ジョブの開始条件を定義している。buildジョブ内のテストを行なってから開始するようにする
+workflows:
+  version: 2
+  build_deploy: # ワークフローの名前。自由
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          # masterブランチにコミットがプッシュorマージされた時のみdeployジョブが開始するようにしている
+          filters:
+            branches:
+              only:
+                - master
